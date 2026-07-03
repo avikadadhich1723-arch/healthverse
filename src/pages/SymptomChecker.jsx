@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, User, Mic, Send, AlertTriangle, RefreshCw, BarChart2, ShieldAlert } from 'lucide-react';
 import { symptomQuestions, symptomAssessments } from '../mockData';
-
+import { runHealthVerseAI } from "../agents/OrchestratorAgent";
 export default function SymptomChecker({ setPage, setSelectedAssessment }) {
   const [messages, setMessages] = useState([
     {
@@ -421,29 +421,112 @@ export default function SymptomChecker({ setPage, setSelectedAssessment }) {
             style={{ flex: 1, background: 'white' }}
             disabled={isRecording}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.target.value.trim()) {
-                const text = e.target.value;
-                e.target.value = '';
-                handleOptionClick({ text, next: 'digestive_mild' });
-              }
-            }}
+  if (e.key === "Enter" && e.target.value.trim()) {
+    const text = e.target.value;
+
+    e.target.value = "";
+
+    const result = runHealthVerseAI(text);
+
+    const userMessage = {
+      id: `u-${Date.now()}`,
+      sender: "user",
+      text,
+    };
+
+    const botMessage = {
+  id: `b-${Date.now()}`,
+  sender: "bot",
+  text: "AI Analysis Complete",
+
+  assessment: {
+    condition: result.analysis.condition,
+
+    description:
+      result.analysis.description ||
+      `AI detected symptoms related to ${result.analysis.condition}.`,
+
+    recommendation:
+      typeof result.recommendation === "string"
+        ? result.recommendation
+        : result.recommendation.text || "Consult a healthcare professional.",
+
+    scores: {
+      ayurveda: result.ayurveda.score,
+      homeopathy: result.homeopathy.score,
+      allopathy: result.allopathy.score,
+    },
+
+    isEmergency: result.emergency.isEmergency,
+  },
+};
+
+    setMessages((prev) => [...prev, userMessage, botMessage]);
+  }
+}}
           />
 
           <button
-            style={{
-              padding: '0 1rem',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              backgroundColor: 'var(--primary)',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Send size={18} />
-          </button>
+  onClick={() => {
+    const input = document.querySelector(".form-control");
+
+    if (!input.value.trim()) return;
+
+    const text = input.value;
+    input.value = "";
+
+    const result = runHealthVerseAI(text);
+
+    const userMessage = {
+      id: `u-${Date.now()}`,
+      sender: "user",
+      text,
+    };
+
+    const botMessage = {
+      id: `b-${Date.now()}`,
+      sender: "bot",
+      text: "AI Analysis Complete",
+
+      assessment: {
+        condition: result.analysis.condition,
+
+        description:
+          result.analysis.description ||
+          `AI detected symptoms related to ${result.analysis.condition}.`,
+
+        recommendation:
+          typeof result.recommendation === "string"
+            ? result.recommendation
+            : result.recommendation.text ||
+              "Consult a healthcare professional.",
+
+        scores: {
+          ayurveda: result.ayurveda.score,
+          homeopathy: result.homeopathy.score,
+          allopathy: result.allopathy.score,
+        },
+
+        isEmergency: result.emergency.isEmergency,
+      },
+    };
+
+    setMessages((prev) => [...prev, userMessage, botMessage]);
+  }}
+  style={{
+    padding: '0 1rem',
+    borderRadius: 'var(--radius-md)',
+    border: 'none',
+    backgroundColor: 'var(--primary)',
+    color: 'white',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}
+>
+  <Send size={18} />
+</button>
         </div>
       </div>
     </div>
