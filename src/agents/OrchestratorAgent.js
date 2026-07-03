@@ -1,4 +1,4 @@
-import { analyzeSymptoms } from "./SymptomAgent";
+import { analyzeSymptoms } from "./TempAgent";
 import { detectEmergency } from "./EmergencyAgent";
 import { getAyurvedaPlan } from "./AyurvedaAgent";
 import { getHomeopathyPlan } from "./HomeopathyAgent";
